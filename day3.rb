@@ -5,34 +5,37 @@ require "active_support/core_ext/array"
 require "active_support/core_ext/string"
 
 public
-def most_common_bit(bits)
+def all_equals?(values)
+  values.uniq.length == 1
+end
+
+def common_bit(bits, comparison_method, default_when_equals)
   counts = bits.tally
-  if counts.map(&:second).uniq.length == 1
-    "1"
+  if all_equals?(counts.map(&:second))
+    default_when_equals
   else
-    counts.max_by(&:second).first
+    counts.public_send(comparison_method, &:second).first
   end
+end
+
+def most_common_bit(bits)
+  common_bit(bits, :max_by, "1")
 end
 
 def least_common_bit(bits)
-  counts = bits.tally
-  if counts.map(&:second).uniq.length == 1
-    "0"
-  else
-    counts.min_by(&:second).first
-  end
+  common_bit(bits, :min_by, "0")
+end
+
+def transpose_strings(arrays)
+  arrays.map { |item| item.split("") }.transpose
 end
 
 def gamma_rate(bin_numbers)
-  bin_numbers.first.length.times.map do |position|
-    most_common_bit(bin_numbers.map { _1[position] })
-  end.join
+  transpose_strings(bin_numbers).map { most_common_bit(_1) }.join
 end
 
 def epsilon_rate(bin_numbers)
-  bin_numbers.first.length.times.map do |position|
-    least_common_bit(bin_numbers.map { _1[position] })
-  end.join
+  transpose_strings(bin_numbers).map { least_common_bit(_1) }.join
 end
 
 def oxygen_generator_rating(bin_numbers, position = 0)
@@ -52,6 +55,12 @@ def rating(bin_numbers, bit_selection_method, position = 0)
     rating(new_bin_numbers, bit_selection_method, position + 1)
   end
 end
+
+def mult_bin_numbers(a, b)
+  a.to_i(2) * b.to_i(2)
+end
+alias :power_consumption :mult_bin_numbers
+alias :life_support_rating :mult_bin_numbers
 
 RSpec.describe "Day 3" do
   let(:example) do
@@ -79,28 +88,24 @@ RSpec.describe "Day 3" do
     e = epsilon_rate(example)
     expect(g).to eql "10110"
     expect(e).to eql "01001"
-    dec_g = g.to_i(2)
-    dec_e = e.to_i(2)
-    expect(dec_g).to eql 22
-    expect(dec_e).to eql 9
-    expect(dec_g * dec_e).to eql 198
+    expect(power_consumption(g, e)).to eql 198
   end
 
   specify "part 1 - anser" do
-    input = File.read("day3_input.txt").split("\n")
-    g = gamma_rate(input)
-    e = epsilon_rate(input)
-    dec_g = g.to_i(2)
-    dec_e = e.to_i(2)
-    expect(dec_g * dec_e).to eql 4103154
+    expect(power_consumption(gamma_rate(input), epsilon_rate(input))).to eql 4103154
   end
 
   specify "part 2 - example" do
-    expect(oxygen_generator_rating(example)).to eql "10111"
-    expect(co2_scrubber_rating(example)).to eql "01010"
+    o = oxygen_generator_rating(example)
+    c = co2_scrubber_rating(example)
+    expect(o).to eql "10111"
+    expect(c).to eql "01010"
+    expect(life_support_rating(o, c)).to eql 230
   end
 
   specify "part 2 - answer" do
-    expect(oxygen_generator_rating(input).to_i(2) * co2_scrubber_rating(input).to_i(2)).to eql 4245351
+    o = oxygen_generator_rating(input)
+    c = co2_scrubber_rating(input)
+    expect(life_support_rating(o, c)).to eql 4245351
   end
 end
