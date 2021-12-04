@@ -1,13 +1,9 @@
 require_relative "spec_helper"
 
 def count_increases(nums)
-  count = 0
-  prev = nil
-  nums.each do |num|
-    count += 1 if prev && prev < num
-    prev = num
-  end
-  count
+  nums.each_cons(2).to_a.select do |window|
+    window[0] < window[1]
+  end.count
 end
 
 def sum_by_window(nums)
