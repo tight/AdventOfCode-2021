@@ -1,5 +1,8 @@
 require_relative "spec_helper"
 
+require "active_support"
+require "active_support/core_ext/array"
+
 class Bingo
   class ThatsABingo < StandardError
   end
@@ -58,7 +61,9 @@ class Bingo
     end
   end
 
-  attr_reader :numbers, :grids, :last_number_called
+  Metadata = Struct.new(:grid, :last_number, :turn)
+
+  attr_reader :numbers, :grids
 
   def initialize(input)
     @numbers = input.shift.split(",").map(&:to_i)
@@ -79,30 +84,57 @@ class Bingo
   end
 
   def draw_numbers!
-    numbers.each do |number|
-      grids.each do |grid|
-        begin
-          @last_number_called = number
-          grid.draw_number!(number)
-        rescue
-          @winning_grid = grid
-          return
-        end
-      end
+    @grid_metadatas = []
+    grids.each do |grid|
+      grid_metadatas << draw_numbers_on(grid)
     end
   end
 
-  def winning_board_score
-    @winning_grid.score
+  def loosing_grid_metadata
+    grid_metadatas.max_by { _1.turn }
   end
 
-  def final_score
-    winning_board_score * last_number_called
+  def winning_grid_metadata
+    grid_metadatas.min_by { _1.turn }
+  end
+
+  def winning_grid_score
+    winning_grid_metadata.grid.score
+  end
+
+  def winning_grid_last_number_called
+    winning_grid_metadata.last_number
+  end
+
+  def winning_grid_final_score
+    winning_grid_score * winning_grid_last_number_called
+  end
+
+  def loosing_grid_score
+    loosing_grid_metadata.grid.score
+  end
+
+  def loosing_grid_last_number_called
+    loosing_grid_metadata.last_number
+  end
+
+  def loosing_grid_final_score
+    loosing_grid_score * loosing_grid_last_number_called
   end
 
   private
 
-  attr_reader :winning_grid
+  attr_reader :grid_metadatas
+
+  def draw_numbers_on(grid)
+    numbers.each_with_index do |number, index|
+      begin
+        grid.draw_number!(number)
+      rescue ThatsABingo
+        return Metadata.new(grid, number, index)
+      end
+    end
+  end
 end
 
 RSpec.describe "Day 4" do
@@ -188,19 +220,27 @@ RSpec.describe "Day 4" do
     ]
 
     bingo.draw_numbers!
-    expect(bingo.last_number_called).to eql 24
-    expect(bingo.winning_board_score).to eql 188
-    expect(bingo.final_score).to eql 4512
+    expect(bingo.winning_grid_last_number_called).to eql 24
+    expect(bingo.winning_grid_score).to eql 188
+    expect(bingo.winning_grid_final_score).to eql 4512
   end
 
   specify "part 1 - answer" do
     bingo = Bingo.new(input).tap(&:draw_numbers!)
-    expect(bingo.final_score).to eql 69579
+    expect(bingo.winning_grid_final_score).to eql 69579
   end
 
-  skip "part 2 - example" do
+  specify "part 2 - example" do
+    bingo = Bingo.new(example)
+    bingo.draw_numbers!
+    expect(bingo.loosing_grid_score).to eql 148
+    expect(bingo.loosing_grid_last_number_called).to eql 13
+    expect(bingo.loosing_grid_final_score).to eql 1924
   end
 
-  skip "part 2 - answer" do
+  specify "part 2 - answer" do
+    bingo = Bingo.new(input)
+    bingo.draw_numbers!
+    expect(bingo.loosing_grid_final_score).to eql 14877
   end
 end
