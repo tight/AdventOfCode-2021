@@ -70,11 +70,10 @@ class Bingo
 
     input.shift
 
-    @grids = input # ["1 2", "3 4", "", "5 6", "7 8"]
-      .chunk { _1 == "" } # [[false, ["1 2", "3 4"]], [true, [""]], [false, ["5 6", "7 8"]]]
-      .reject { |k, _| k } # [[false, ["1 2", "3 4"]], [false, ["5 6", "7 8"]]]
-      .map { |_, lines| lines.map { |line| line.split(" ").map(&:to_i) } } # [[[1, 2], [3, 4]], [[5, 6], [7, 8]]]
-      .map { Grid.new(_1) } # [Grid.new([[1, 2], [3, 4]), Grid.new([[5, 6], [7, 8]])]
+    # input:                                                            # ["1 2", "3 4", "", "5 6", "7 8"]
+    @grids = split_on(input, "")                                        # [["1 2", "3 4"], ["5 6", "7 8"]]
+      .map { |lines| lines.map { |line| line.split(" ").map(&:to_i) } } # [[[1, 2], [3, 4]], [[5, 6], [7, 8]]]
+      .map { Grid.new(_1) }                                             # [Grid.new([[1, 2], [3, 4]), Grid.new([[5, 6], [7, 8]])]
   end
 
   def draw_numbers!
@@ -119,6 +118,13 @@ class Bingo
   private
 
   attr_reader :grid_metadatas
+
+  def split_on(array, delimiter)
+    array                  # ["1 2", "3 4", "", "5 6", "7 8"]
+      .chunk { _1 == "" }  # [[false, ["1 2", "3 4"]], [true, [""]], [false, ["5 6", "7 8"]]]
+      .reject { |k, _| k } # [[false, ["1 2", "3 4"]], [false, ["5 6", "7 8"]]]
+      .map(&:last)         # [["1 2", "3 4"], ["5 6", "7 8"]]
+  end
 
   def draw_numbers_on(grid)
     numbers.each_with_index do |number, index|
