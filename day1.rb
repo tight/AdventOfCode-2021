@@ -49,11 +49,19 @@ RSpec.describe "Day 1" do
     expect(count_increases(read_nums_from_string(File.read("day1_input.txt")))).to eql 1624
   end
 
+  specify "part 1 - one liner answer" do
+    expect(File.read("day1_input.txt").lines.map(&:to_i).each_cons(2).count { _1 < _2 }).to eql 1624
+  end
+
   specify "part 2 - example" do
     expect(count_increases(sum_by_window(read_nums_from_string(example)))).to eql 5
   end
 
   specify "part 2 - answer" do
     expect(count_increases(sum_by_window(read_nums_from_string(File.read("day1_input.txt"))))).to eql 1653
+  end
+
+  specify "part 2 - one liner answer" do
+    expect(File.read("day1_input.txt").lines.map(&:to_i).each_cons(3).map { _1.sum }.each_cons(2).count { _1 < _2 }).to eql 1653
   end
 end
