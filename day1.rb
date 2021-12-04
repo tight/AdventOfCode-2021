@@ -11,16 +11,9 @@ def count_increases(nums)
 end
 
 def sum_by_window(nums)
-  sums = []
-  n_minus_1 = n_minus_2 = nil
-  nums.each do |num|
-    if n_minus_1 && n_minus_2
-      sums << num + n_minus_1 + n_minus_2
-    end
-    n_minus_2 = n_minus_1
-    n_minus_1 = num
+  nums.each_cons(3).map do |window|
+    window.sum
   end
-  sums
 end
 
 def read_nums_from_string(string)
