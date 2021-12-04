@@ -70,17 +70,11 @@ class Bingo
 
     input.shift
 
-    @grids = []
-    lines = []
-    input.each do |line|
-      if line == ""
-        @grids << Grid.new(lines)
-        lines = []
-      else
-        lines << line.split(" ").map(&:to_i)
-      end
-    end
-    @grids << Grid.new(lines)
+    @grids = input # ["1 2", "3 4", "", "5 6", "7 8"]
+      .chunk { _1 == "" } # [[false, ["1 2", "3 4"]], [true, [""]], [false, ["5 6", "7 8"]]]
+      .reject { |k, _| k } # [[false, ["1 2", "3 4"]], [false, ["5 6", "7 8"]]]
+      .map { |_, lines| lines.map { |line| line.split(" ").map(&:to_i) } } # [[[1, 2], [3, 4]], [[5, 6], [7, 8]]]
+      .map { Grid.new(_1) } # [Grid.new([[1, 2], [3, 4]), Grid.new([[5, 6], [7, 8]])]
   end
 
   def draw_numbers!
