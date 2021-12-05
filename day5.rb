@@ -113,4 +113,17 @@ RSpec.describe "Day 5" do
     map = Map.new(input)
     expect(map.overlap_count).to eql 17717
   end
+
+  specify "part 2 - \"one\" liner" do
+    expect(
+      File.read("day5_input.txt").lines.map do |vents|
+        from_x, from_y, to_x, to_y = vents.scan(/\d+/).map(&:to_i)
+        length = [(from_y - to_y).abs, (from_x - to_x).abs].max + 1
+        xs, ys = [[from_x, to_x], [from_y, to_y]].map do |from, to|
+          from == to ? [from] * length : from.step(to: to, by: to <=> from)
+        end
+        xs.zip(ys)
+      end.flatten(1).tally.count { _2 > 1 }
+    ).to eql 17717
+  end
 end
