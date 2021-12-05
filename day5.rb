@@ -9,23 +9,14 @@ class Map
     end
 
     def coords
-      step_x = step(from_x, to_x)
-      step_y = step(from_y, to_y)
-      current_coord = [from_x, from_y]
-      coords = []
-      while current_coord != [to_x, to_y]
-        coords << current_coord
-        x, y = current_coord
-        current_coord = [x + step_x, y + step_y]
-      end
-      coords << current_coord
-      coords
+      length = [(from_y - to_y).abs, (from_x - to_x).abs].max + 1
+      steps(from_x, to_x, length).zip(steps(from_y, to_y, length))
     end
 
     private
 
-    def step(a, b)
-      -(a <=> b)
+    def steps(a, b, length)
+      a == b ? [a] * length : a.step(to: b, by: b <=> a)
     end
   end
 
