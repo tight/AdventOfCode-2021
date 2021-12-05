@@ -25,13 +25,7 @@ class Map
     private
 
     def step(a, b)
-      if a > b
-        -1
-      elsif a < b
-        1
-      else
-        0
-      end
+      -(a <=> b)
     end
   end
 
@@ -45,8 +39,9 @@ class Map
     stats = Hash.new(0)
 
     vents.flat_map(&:coords).each do |x, y|
-      stats["#{x}-#{y}"] += 1
+      stats[[x, y]] += 1
     end
+
     stats.count { |_, count| count > 1 }
   end
 end
