@@ -9,10 +9,29 @@ class Map
     end
 
     def coords
-      return [] unless from_x == to_x || from_y == to_y
-      x1, x2 = [from_x, to_x].minmax
-      y1, y2 = [from_y, to_y].minmax
-      ((x1..x2).map { [_1, from_y] } + (y1..y2).map { [from_x, _1] }).uniq
+      step_x = step(from_x, to_x)
+      step_y = step(from_y, to_y)
+      current_coord = [from_x, from_y]
+      coords = []
+      while current_coord != [to_x, to_y]
+        coords << current_coord
+        x, y = current_coord
+        current_coord = [x + step_x, y + step_y]
+      end
+      coords << current_coord
+      coords
+    end
+
+    private
+
+    def step(a, b)
+      if a > b
+        -1
+      elsif a < b
+        1
+      else
+        0
+      end
     end
   end
 
@@ -24,6 +43,7 @@ class Map
 
   def overlap_count
     stats = Hash.new(0)
+
     vents.flat_map(&:coords).each do |x, y|
       stats["#{x}-#{y}"] += 1
     end
@@ -74,25 +94,37 @@ RSpec.describe "Day 5" do
       expect(v.coords).to match_array [[7, 0], [7, 1], [7, 2], [7, 3], [7, 4]]
     end
 
-    specify "other" do
+    specify "diag" do
       v = Map::Vent.new("0,0 -> 2,2")
-      expect(v.coords).to be_empty
+      expect(v.coords).to match_array [[0, 0], [1, 1], [2, 2]]
+    end
+
+    specify "r diag" do
+      v = Map::Vent.new("2,2 -> 0,0")
+      expect(v.coords).to match_array [[0, 0], [1, 1], [2, 2]]
+
+      v = Map::Vent.new("8,0 -> 0,8")
+      expect(v.coords).to match_array [[8, 0], [7, 1], [6, 2], [5, 3], [4, 4], [3, 5], [2, 6], [1, 7], [0, 8]]
     end
   end
 
-  specify "part 1 - example" do
+  skip "part 1 - example" do
     map = Map.new(example)
     expect(map.overlap_count).to eql 5
   end
 
-  specify "part 1 - answer" do
+  skip "part 1 - answer" do
     map = Map.new(input)
     expect(map.overlap_count).to eql 4728
   end
 
-  skip "part 2 - example" do
+  specify "part 2 - example" do
+    map = Map.new(example)
+    expect(map.overlap_count).to eql 12
   end
 
-  skip "part 2 - answer" do
+  specify "part 2 - answer" do
+    map = Map.new(input)
+    expect(map.overlap_count).to eql 17717
   end
 end
