@@ -5,20 +5,15 @@ class Shoal
 
   def initialize(states)
     @counts = states.tally
+    @counts.default = 0
   end
 
   def wait(days = 1)
     days.times do
-      new_counts = Hash.new(0)
-      counts.each do |state, count|
-        if state == 0
-          new_counts[8] += count
-          new_counts[6] += count
-        else
-          new_counts[state - 1] += count
-        end
-      end
-      @counts = new_counts
+      counts.transform_keys! { _1 - 1 }
+      counts[8] = counts[-1]
+      counts[6] += counts[-1]
+      counts.delete(-1)
     end
     self
   end
