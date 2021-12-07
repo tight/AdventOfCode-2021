@@ -3,13 +3,12 @@ require_relative "spec_helper"
 class Crabs
   def initialize(positions)
     @positions = positions
+    @cache = {}
   end
 
   def fuel_for(new_position)
-    @cache ||= {}
     positions.map.with_index do |position, index|
-      distance = (new_position - position).abs
-      @cache[distance] ||= fuel_for_distance(distance)
+      fuel_for_distance((new_position - position).abs)
     end.sum
   end
 
@@ -25,7 +24,7 @@ class Crabs
   attr_reader :positions
 
   def fuel_for_distance(distance)
-    distance.times.map { _1 + 1 }.to_a.sum
+    @cache[distance] ||= distance.times.map { _1 + 1 }.to_a.sum
   end
 end
 
