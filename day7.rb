@@ -7,14 +7,14 @@ class Crabs
   end
 
   def fuel_for(new_position)
-    positions.map.with_index do |position, index|
+    positions.map do |position|
       fuel_for_distance((new_position - position).abs)
     end.sum
   end
 
   def min_fuel_to_align
     min, max = positions.minmax
-    (min..max).map.with_index do |position, index|
+    (min..max).map do |position|
       [position, fuel_for(position)]
     end.min_by { _2 }.last
   end
