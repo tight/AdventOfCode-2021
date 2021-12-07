@@ -6,14 +6,16 @@ class Crabs
   end
 
   def fuel_for(new_position)
-    positions.map do |position|
-      (new_position - position).abs
+    @cache ||= {}
+    positions.map.with_index do |position, index|
+      distance = (new_position - position).abs
+      @cache[distance] ||= fuel_for_distance(distance)
     end.sum
   end
 
   def min_fuel_to_align
     min, max = positions.minmax
-    (min..max).map do |position|
+    (min..max).map.with_index do |position, index|
       [position, fuel_for(position)]
     end.min_by { _2 }.last
   end
@@ -21,6 +23,10 @@ class Crabs
   private
 
   attr_reader :positions
+
+  def fuel_for_distance(distance)
+    distance.times.map { _1 + 1 }.to_a.sum
+  end
 end
 
 RSpec.describe "Day 7" do
@@ -38,30 +44,50 @@ RSpec.describe "Day 7" do
   end
 
   describe "Crabs" do
-    specify "single crab" do
-      expect(Crabs.new([1]).fuel_for(10)).to eql 9
+    skip "constant fuel rate" do
+      specify "single crab" do
+        expect(Crabs.new([1]).fuel_for(10)).to eql 9
+      end
+
+      specify "single crab - reverse" do
+        expect(Crabs.new([10]).fuel_for(1)).to eql 9
+      end
+
+      specify "several crabs" do
+        expect(Crabs.new(example).fuel_for(2)).to eql 37
+      end
     end
 
-    specify "single crab - reverse" do
-      expect(Crabs.new([10]).fuel_for(1)).to eql 9
+    describe "real fuel rate" do
+      specify "single crab" do
+        expect(Crabs.new([5]).fuel_for(16)).to eql 66
+      end
+
+      specify "single crab - reverse" do
+        expect(Crabs.new([16]).fuel_for(5)).to eql 66
+      end
+
+      specify "several crabs" do
+        expect(Crabs.new(example).fuel_for(2)).to eql 206
+      end
+    end
+  end
+
+  skip "constant fuel rate" do
+    specify "part 1 - example" do
+      expect(Crabs.new(example).min_fuel_to_align).to eql 37
     end
 
-    specify "several crabs" do
-      expect(Crabs.new(example).fuel_for(2)).to eql 37
+    specify "part 1 - answer" do
+      expect(Crabs.new(input).min_fuel_to_align).to eql 343441
     end
   end
 
-  specify "part 1 - example" do
-    expect(Crabs.new(example).min_fuel_to_align).to eql 37
+  specify "part 2 - example" do
+    expect(Crabs.new(example).min_fuel_to_align).to eql 168
   end
 
-  specify "part 1 - answer" do
-    expect(Crabs.new(input).min_fuel_to_align).to eql 343441
-  end
-
-  skip "part 2 - example" do
-  end
-
-  skip "part 2 - answer" do
+  specify "part 2 - answer" do
+    expect(Crabs.new(input).min_fuel_to_align).to eql 98925151
   end
 end
