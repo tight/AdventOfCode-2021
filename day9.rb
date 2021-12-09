@@ -11,19 +11,42 @@ class HeightMap
   end
 
   def risk_levels_sum
-    heights.select do |(x, y), height|
-      neighboors = [
-        heights[[x - 1, y]],
-        heights[[x + 1, y]],
-        heights[[x, y - 1]],
-        heights[[x, y + 1]],
-      ]
+    low_points.values.sum { _1 + 1 }
+  end
 
-      neighboors.compact.all? { |neighboor_height| height < neighboor_height }
-    end.values.sum { _1 + 1 }
+  def mult_three_largest_bassins
+    low_points.map do |(x, y), height|
+      bassin_size(x, y, height)
+    end.sort.last(3).inject(:*)
   end
 
   private
+
+  def bassin_size(x, y, height, processed = [])
+    processed << [x, y]
+    1 + neighboors(x, y).sum do |(neighboor_x, neighboor_y), neighboor_height|
+      if (neighboor_height == 9) || (height >= neighboor_height) || processed.include?([neighboor_x, neighboor_y])
+        0
+      else
+        bassin_size(neighboor_x, neighboor_y, neighboor_height, processed)
+      end
+    end
+  end
+
+  def neighboors(x, y)
+    {
+      [x - 1, y] => heights[[x - 1, y]],
+      [x + 1, y] => heights[[x + 1, y]],
+      [x, y - 1] => heights[[x, y - 1]],
+      [x, y + 1] => heights[[x, y + 1]],
+    }.select { _2 }
+  end
+
+  def low_points
+    heights.select do |(x, y), height|
+      neighboors(x, y).all? { |_, neighboor_height| height < neighboor_height }
+    end
+  end
 
   attr_reader :heights
 end
@@ -54,9 +77,11 @@ RSpec.describe "Day 9" do
     expect(HeightMap.new(input).risk_levels_sum).to eql 506
   end
 
-  skip "part 2 - example" do
+  specify "part 2 - example" do
+    expect(HeightMap.new(example).mult_three_largest_bassins).to eql 1134
   end
 
-  skip "part 2 - answer" do
+  specify "part 2 - answer" do
+    expect(HeightMap.new(input).mult_three_largest_bassins).to eql 931200
   end
 end
