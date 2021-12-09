@@ -1,11 +1,11 @@
 require_relative "spec_helper"
 
 class Display
-  attr_reader :out
+  attr_reader :lines, :out
 
   def initialize(lines)
-    digit_reprs = lines.map { |line| line.scan(/[a-g]+/) }
-    @out = digit_reprs.map { _1[-4..] }
+    @lines = lines.map { |line| line.scan(/[a-g]+/) }
+    @out = lines.map { _1[-4..] }
   end
 
   def easy_digit_count
@@ -15,6 +15,111 @@ class Display
     # 7     => 3
     # 8     => 7
     out.flatten.count { |digit| [2, 4, 3, 7].include?(digit.length) }
+  end
+
+  # *acedgfb* cdfbe gcdfa fbcad *dab* cefabd cdfgeb *eafb* cagedb *ab* | cdfeb fcadb cdfeb cdbaf
+  # 2 => ab
+  # 4 => eafb
+  # 7 => dab
+  # 8 => acedgfb
+
+  #   0:      1:      2:      3:      4:
+  #  aaaa    ....    aaaa    aaaa    ....
+  # b    c  .    c  .    c  .    c  b    c
+  # b    c  .    c  .    c  .    c  b    c
+  #  ....    ....    dddd    dddd    dddd
+  # e    f  .    f  e    .  .    f  .    f
+  # e    f  .    f  e    .  .    f  .    f
+  #  gggg    ....    gggg    gggg    ....
+
+  #   5:      6:      7:      8:      9:
+  #  aaaa    aaaa    aaaa    aaaa    aaaa
+  # b    .  b    .  .    c  b    c  b    c
+  # b    .  b    .  .    c  b    c  b    c
+  #  dddd    dddd    ....    dddd    dddd
+  # .    f  e    f  .    f  e    f  .    f
+  # .    f  e    f  .    f  e    f  .    f
+  #  gggg    gggg    ....    gggg    gggg
+
+  # using 2
+  # a => c f
+  # b => c f
+  # using 4
+  # e => b c d f
+  # a => b c d f
+  # f => b c d f
+  # b => b c d f
+  # using 7
+  # d => a c f
+  # a => a c f
+  # b => a c f
+  # using 8
+  # a => a b c d e f g
+  # b => a b c d e f g
+  # c => a b c d e f g
+  # d => a b c d e f g
+  # e => a b c d e f g
+  # f => a b c d e f g
+  # g => a b c d e f g
+
+  # a => *c* *f* + b *c* d *f* + a *c* *f* + a b *c* d e *f* g => c f
+  # b => *c* *f* + b *c* d *f* + a *c* *f* + a b *c* d e *f* g => c f
+  # c => *
+  # d => a c f + a b c d e f g => a c f
+  # e => b c d f
+  # f => b c d f
+  # g => *
+
+  # Valid combinations
+  # abcefg
+  # cf
+  # acdeg
+  # acdfg
+  # bcdf
+  # abdfg
+  # abdefg
+  # acf
+  # abcdefg
+  # abcdfg
+
+  # Normal
+  #   aaaa
+  #  b    c
+  #  b    c
+  #   dddd
+  #  e    f
+  #  e    f
+  #   gggg
+
+  # Input
+  #  dddd
+  # e    a
+  # e    a
+  #  ffff
+  # g    b
+  # g    b
+  #  cccc
+
+  # utiliser partie 1
+
+  def output_sum
+    lines.map do |digits|
+      digits.map do |digit|
+        value = if digit.length == 2
+          "1"
+        elsif digit.length == 4
+          "4"
+        elsif digit.length == 3
+          "7"
+        elsif digit.length == 7
+          "8"
+        else
+          "."
+        end
+
+        puts [digit, value].inspect
+      end
+    end
   end
 end
 
@@ -44,6 +149,11 @@ RSpec.describe "Day 8" do
     specify "easy_digit_count" do
       expect(Display.new([example.first]).easy_digit_count).to eql 2
     end
+
+    specify "output_sum", :focus do
+      example2 = "acedgfb cdfbe gcdfa fbcad dab cefabd cdfgeb eafb cagedb ab | cdfeb fcadb cdfeb cdbaf"
+      expect(Display.new([example2]).output_sum).to eql 5353
+    end
   end
 
   specify "part 1 - example" do
@@ -54,7 +164,8 @@ RSpec.describe "Day 8" do
     expect(Display.new(input).easy_digit_count).to eql 493
   end
 
-  skip "part 2 - example" do
+  specify "part 2 - example" do
+    expect(Display.new(input).output_sum).to eql 61229
   end
 
   skip "part 2 - answer" do
