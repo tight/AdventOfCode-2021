@@ -22,6 +22,15 @@ class Octopuses
     end
   end
 
+  def flash_simultaneously_at
+    steps = 0
+    while true
+      after(1)
+      steps += 1
+      return steps if levels.all? { |_, level| level == 0 }
+    end
+  end
+
   def to_s
     length.times do |y|
       length.times do |x|
@@ -128,9 +137,13 @@ RSpec.describe "Day 11" do
     expect(o.flash_count).to eql 1729
   end
 
-  skip "part 2 - example" do
+  specify "part 2 - example" do
+    o = Octopuses.new(example)
+    expect(o.flash_simultaneously_at).to eql 195
   end
 
-  skip "part 2 - answer" do
+  specify "part 2 - answer" do
+    o = Octopuses.new(input)
+    expect(o.flash_simultaneously_at).to eql 237
   end
 end
