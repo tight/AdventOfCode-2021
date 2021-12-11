@@ -32,49 +32,41 @@ class Display
     end.sum
   end
 
-  #   0:      1:      2:      3:      4:
-  #  aaaa    ....    aaaa    aaaa    ....
-  # b    c  .    c  .    c  .    c  b    c
-  # b    c  .    c  .    c  .    c  b    c
-  #  ....    ....    dddd    dddd    dddd
-  # e    f  .    f  e    .  .    f  .    f
-  # e    f  .    f  e    .  .    f  .    f
-  #  gggg    ....    gggg    gggg    ....
-
-  #   5:      6:      7:      8:      9:
-  #  aaaa    aaaa    aaaa    aaaa    aaaa
-  # b    .  b    .  .    c  b    c  b    c
-  # b    .  b    .  .    c  b    c  b    c
-  #  dddd    dddd    ....    dddd    dddd
-  # .    f  e    f  .    f  e    f  .    f
-  # .    f  e    f  .    f  e    f  .    f
-  #  gggg    gggg    ....    gggg    gggg
-
-  # Déductions possible
-  # ab eafb abd
-  # a => c f
-  # b => c f
-  # c => e g
-  # d => a
-  # e => b d
-  # f => b d
-  # g => e g
-
-  # Solution
-  # a => c
-  # b => f
-  # c => g
-  # d => a
-  # e => b
-  # f => d
-  # g => e
-
   def output(digits)
+    one = digits.detect { _1.length == 2 }.split("")
+    four = digits.detect { _1.length == 4 }.split("")
+    seven = digits.detect { _1.length == 3 }.split("")
+    eight = digits.detect { _1.length == 7 }.split("")
+
+    # Déductions possibles
+    #
+    # 1 = 2 segments =     c     f
+    # 4 = 4 segments =   b c d   f
+    # 7 = 3 segments = a   c     f
+    # 8 = 7 segments = a b c d e f g
+    #                  X               7 - 1
+    #                      X     X     1
+    #                    X   X         4 - 1
+    #                          X   X   8 - 7 - 4
+
+    constraints = {}
+    constraints[(seven - one).first] = ["a"]
+    one.each { constraints[_1] = ["c", "f"] }
+    (four - one).each { constraints[_1] = ["b", "d"] }
+    (eight - seven - four).each { constraints[_1] = ["e", "g"] }
+
     "abcdefg".split("").permutation.to_a.each do |letters|
       swaps = "abcdefg".split("").zip(letters).to_h
-      guess = digits.map { _1.gsub(/./, swaps) }.map { _1.split("").sort.join }
-      if guess.all? { VALID_COMBINATIONS.include?(_1) }
-        return guess.map { LETTERS_TO_NUMBERS[_1] }.last(4).map(&:to_s).join.to_i
+
+      respect_contraints = constraints.all? do |from, candidates|
+        candidates.include?(swaps[from])
+      end
+
+      if respect_contraints
+        guess = digits.map { _1.gsub(/./, swaps) }.map { _1.split("").sort.join }
+        if guess.all? { VALID_COMBINATIONS.include?(_1) }
+          return guess.map { LETTERS_TO_NUMBERS[_1] }.last(4).map(&:to_s).join.to_i
+        end
       end
     end
   end
