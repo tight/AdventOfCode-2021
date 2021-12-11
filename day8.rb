@@ -27,7 +27,7 @@ class Display
   VALID_COMBINATIONS = LETTERS_TO_NUMBERS.keys
 
   def output_sum
-    lines.map
+    lines.map do |digits|
       output(digits)
     end.sum
   end
