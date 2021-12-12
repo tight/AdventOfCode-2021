@@ -9,7 +9,7 @@ class Map
   end
 
   def paths_count
-    search_paths([["start"]]).count { |path| path.last == "end" }
+    search_paths([["start"]]).count
   end
 
   private
@@ -19,16 +19,22 @@ class Map
   def search_paths(paths)
     founds = []
     paths.each do |path|
-      ways = connections
-        .select { |from, _| from == path.last }
-        .reject { |_, to| small?(to) && path.include?(to) }
-      if ways.empty?
+      if path.last == "end"
         founds << path
       else
+        ways = connections
+          .select { |from, _| from == path.last }
+          .reject { |_, to| (to == "start") || (small?(to) && path.count(to) > 1) }
+          .select { |_, to| valid_small_caves_visits?(path + [to]) }
         founds += search_paths(ways.map { |from, to| path + [to] })
       end
     end
     founds
+  end
+
+  def valid_small_caves_visits?(path)
+    counts = path.select { small?(_1) }.tally
+    (counts.count { |_, count| count == 2 }) <= 1
   end
 
   def small?(str)
@@ -50,23 +56,73 @@ RSpec.describe "Day 12" do
       INPUT
     )
   end
+  let(:slightly_larger_example) do
+    parse(
+      <<~INPUT
+        dc-end
+        HN-start
+        start-kj
+        dc-start
+        dc-HN
+        LN-dc
+        HN-end
+        kj-sa
+        kj-HN
+        kj-dc
+      INPUT
+    )
+  end
+  let(:even_larger_example) do
+    parse(
+      <<~INPUT
+        fs-end
+        he-DX
+        fs-he
+        start-DX
+        pj-DX
+        end-zg
+        zg-sl
+        zg-pj
+        pj-he
+        RW-he
+        fs-DX
+        pj-RW
+        zg-RW
+        start-pj
+        he-WI
+        zg-he
+        pj-fs
+        start-RW
+      INPUT
+    )
+  end
   let(:input) { parse(File.read("day12_input.txt")) }
 
   def parse(input)
     input.split("\n").map { _1.split("-") }
   end
 
-  specify "part 1 - example" do
+  skip "part 1 - example" do
     expect(Map.new(example).paths_count).to eql 10
   end
 
-  specify "part 1 - answer" do
+  skip "part 1 - answer" do
     expect(Map.new(input).paths_count).to eql 4659
   end
 
-  skip "part 2 - example" do
+  specify "part 2 - example" do
+    expect(Map.new(example).paths_count).to eql 36
   end
 
-  skip "part 2 - answer" do
+  specify "part 2 - slightly larger example" do
+    expect(Map.new(slightly_larger_example).paths_count).to eql 103
+  end
+
+  specify "part 2 -  even larger example" do
+    expect(Map.new(even_larger_example).paths_count).to eql 3509
+  end
+
+  specify "part 2 - answer" do
+    expect(Map.new(input).paths_count).to eql 148962
   end
 end
