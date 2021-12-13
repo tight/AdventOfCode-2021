@@ -4,11 +4,16 @@ public
 
 RSpec.describe "Day XXX" do
   let(:example) do
-    <<~INPUT
-    INPUT
-      .split("\n")
+    parse(
+      <<~INPUT
+      INPUT
+    )
   end
-  let(:input) { File.read("dayXXX_input.txt").split("\n") }
+  let(:input) { parse(File.read("dayXXX_input.txt")) }
+
+  def parse(input)
+    input.split("\n")
+  end
 
   specify "part 1 - example" do
   end
