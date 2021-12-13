@@ -8,10 +8,14 @@ class Paper
     @height = height || compute_height
   end
 
-  def dots_count
+  def fold!
     folds.each do |(axe, fold_at)|
       fold(axe, fold_at)
     end
+  end
+
+  def dots_count
+    fold!
     dots.count
   end
 
@@ -115,9 +119,17 @@ RSpec.describe "Day 13" do
     expect(Paper.new(dots, folds).dots_count).to eql 745
   end
 
-  skip "part 2 - example" do
-  end
-
-  skip "part 2 - answer" do
+  specify "part 2 - answer" do
+    dots, folds = input
+    expect(Paper.new(dots, folds).tap(&:fold!).to_s).to eql(<<~ANSWER
+        .##..###..#..#...##.####.###...##...##..
+        #..#.#..#.#.#.....#.#....#..#.#..#.#..#.
+        #..#.###..##......#.###..###..#....#....
+        ####.#..#.#.#.....#.#....#..#.#.##.#....
+        #..#.#..#.#.#..#..#.#....#..#.#..#.#..#.
+        #..#.###..#..#..##..#....###...###..##..
+      ANSWER
+    )
+    # ABKJFBGC
   end
 end
