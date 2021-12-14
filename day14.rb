@@ -5,33 +5,29 @@ class Polymerization
 
   def initialize(polymer, rules)
     @polymer = polymer
-    @rules = rules
+    @rules = rules.map do |pair, to_insert|
+      a, b = pair.split("")
+      [pair, [to_insert, b].join]
+    end.to_h
   end
 
   def step(n = 1)
-    n.times do
-      new_polymer = [polymer.first]
-      polymer.each_cons(2).each do |(a, b)|
-        new_polymer << [rules.fetch([a, b]), b]
-      end
-      @polymer = new_polymer.flatten
+    n.times do |index|
+      puts "step: #{index} / #{n}"
+      @polymer = polymer[0] + polymer.split("").each_cons(2).to_a.join.gsub(/../, rules)
     end
   end
 
   def most_common_element_count
-    polymer.tally.max_by { _2 }.last
+    polymer.split("").tally.max_by { _2 }.last
   end
 
   def least_common_element_count
-    polymer.tally.min_by { _2 }.last
+    polymer.split("").tally.min_by { _2 }.last
   end
 
   def most_common_minus_least_common_element_count
     most_common_element_count - least_common_element_count
-  end
-
-  def to_s
-    polymer.join
   end
 
   private
@@ -69,19 +65,19 @@ RSpec.describe "Day 14" do
   def parse(input)
     polymer, rules = input.split("\n\n")
     [
-      polymer.split(""),
+      polymer,
       rules.split("\n").map do |rule|
         froms, to = rule.scan(/[A-Z]+/)
-        [froms.split(""), to]
+        [froms, to]
       end.to_h
     ]
   end
 
   specify "part 1 - example" do
-    expect(Polymerization.new(*example).tap(&:step).to_s).to eql "NCNBCHB"
-    expect(Polymerization.new(*example).tap { _1.step(2) }.to_s).to eql "NBCCNBBBCBHCB"
-    expect(Polymerization.new(*example).tap { _1.step(3) }.to_s).to eql "NBBBCNCCNBBNBNBBCHBHHBCHB"
-    expect(Polymerization.new(*example).tap { _1.step(4) }.to_s).to eql "NBBNBNBBCCNBCNCCNBBNBBNBBBNBBNBBCBHCBHHNHCBBCBHCB"
+    expect(Polymerization.new(*example).tap(&:step).polymer).to eql "NCNBCHB"
+    expect(Polymerization.new(*example).tap { _1.step(2) }.polymer).to eql "NBCCNBBBCBHCB"
+    expect(Polymerization.new(*example).tap { _1.step(3) }.polymer).to eql "NBBBCNCCNBBNBNBBCHBHHBCHB"
+    expect(Polymerization.new(*example).tap { _1.step(4) }.polymer).to eql "NBBNBNBBCCNBCNCCNBBNBBNBBBNBBNBBCBHCBHHNHCBBCBHCB"
     p = Polymerization.new(*example).tap { _1.step(10) }
     expect(p.most_common_element_count).to eql 1749
     expect(p.least_common_element_count).to eql 161
@@ -93,7 +89,12 @@ RSpec.describe "Day 14" do
     expect(p.most_common_minus_least_common_element_count).to eql 2375
   end
 
-  skip "part 2 - example" do
+  specify "part 2 - example", :focus do
+    raise "TROP LONG"
+    p = Polymerization.new(*example).tap { _1.step(40) }
+    expect(p.most_common_element_count).to eql 2192039569602
+    expect(p.least_common_element_count).to eql 3849876073
+    expect(p.most_common_minus_least_common_element_count).to eql 2188189693529
   end
 
   skip "part 2 - answer" do
