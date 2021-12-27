@@ -60,6 +60,18 @@ class ProbeLauncher
     min_reached_y * -1
   end
 
+  def possible_velocities_count
+    count = 0
+    (1..max_x).to_a.each do |x_vel|
+      (-max_y..max_y).to_a.each do |y_vel|
+        local_min_reached_y = max_y_for(x_vel, y_vel)
+        next unless local_min_reached_y
+        count += 1
+      end
+    end
+    count
+  end
+
   private
 
   attr_reader :min_x, :max_x, :min_y, :max_y
@@ -126,9 +138,13 @@ RSpec.describe "Day 17" do
     expect(p.min_y_reaching_target).to eql 5995
   end
 
-  skip "part 2 - example" do
+  specify "part 2 - example" do
+    p = ProbeLauncher.new(*example)
+    expect(p.possible_velocities_count).to eql 112
   end
 
-  skip "part 2 - answer" do
+  specify "part 2 - answer", :focus do
+    p = ProbeLauncher.new(*input)
+    expect(p.possible_velocities_count).to eql 3202
   end
 end
