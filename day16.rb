@@ -24,10 +24,10 @@ class BITS
 
   def initialize(hex)
     @bits = hex_to_bin(hex)
+    debug @bits.inspect
   end
 
   def parse
-    debug "# parse"
     @ip = 0
     [parse_packet]
   end
@@ -46,8 +46,39 @@ class BITS
     end
   end
 
+  def compute
+    compute_packets(parse).first
+  end
+
+  def compute_packets(packets)
+    packets.map do |packet|
+      version, type, value_or_sub_packets = packet
+      if type == 4
+        value_or_sub_packets
+      elsif type == 0 # sum
+        compute_packets(value_or_sub_packets).inject(&:+)
+      elsif type == 1 # product
+        compute_packets(value_or_sub_packets).inject(&:*)
+      elsif type == 2 # min
+        compute_packets(value_or_sub_packets).min
+      elsif type == 3 # max
+        compute_packets(value_or_sub_packets).max
+      elsif type == 5 # greater than
+        a, b = compute_packets(value_or_sub_packets)
+        a > b ? 1 : 0
+      elsif type == 6 # less than
+        a, b = compute_packets(value_or_sub_packets)
+        a < b ? 1 : 0
+      elsif type == 7 # equals
+        a, b = compute_packets(value_or_sub_packets)
+        a == b ? 1 : 0
+      else
+        raise "Packet type #{type.inspect} unknown"
+      end
+    end
+  end
+
   def parse_packet
-    debug "# parse_packet"
     debug "--- packet at #{ip}"
     version = read(3, "version")
     type = read(3, "type")
@@ -55,21 +86,19 @@ class BITS
       debug "- literal value"
       parse_value(version, type)
     else
-      debug "- operator"
+      debug "- operator type #{type}"
       parse_operator(version, type)
     end
-
   end
 
   def parse_operator(version, type)
-    debug "# parse_operator"
-    type = read(1, "operator type")
-    if type == 1
-      debug "- operator type 1"
+    mode = read(1, "operator mode")
+    if mode == 1
+      debug "- operator mode 1"
       sub_packet_count = read(11, "sub packet count")
       [version, type, sub_packet_count.times.map { parse_packet }]
     else # 0
-      debug "- operator type 0"
+      debug "- operator mode 0"
       sub_packets_total_length = read(15, "sub packet total length")
       sub_packer_start_ip = ip
       sub_packets = []
@@ -83,7 +112,6 @@ class BITS
   end
 
   def parse_value(version, type)
-    debug "# parse_value"
     values = ""
     loop do
       debug "- loop if zero"
@@ -109,7 +137,6 @@ class BITS
 
   def read_bits(n, what)
     bits[ip, n].tap do |v|
-      debug "#{what} => #{v} (IP: #{ip})"
       @ip += n
     end
   end
@@ -140,12 +167,12 @@ RSpec.describe "Day 16" do
       expect(BITS.new("D2FE28").parse).to eql [[6, 4, 2021]]
     end
 
-    specify "operator type 0" do
-      expect(BITS.new("38006F45291200").parse).to eql [[1, 0, [[6, 4, 10], [2, 4, 20]]]]
+    specify "operator mode 0" do
+      expect(BITS.new("38006F45291200").parse).to eql [[1, 6, [[6, 4, 10], [2, 4, 20]]]]
     end
 
-    specify "operator type 1" do
-      expect(BITS.new("EE00D40C823060").parse).to eql [[7, 1, [[2, 4, 1], [4, 4, 2], [1, 4, 3]]]]
+    specify "operator mode 1" do
+      expect(BITS.new("EE00D40C823060").parse).to eql [[7, 3, [[2, 4, 1], [4, 4, 2], [1, 4, 3]]]]
     end
 
     specify "versions test 1" do
@@ -169,9 +196,41 @@ RSpec.describe "Day 16" do
     expect(BITS.new(input).versions).to eql 860
   end
 
-  skip "part 2 - example" do
+  describe "part 2 - examples" do
+    specify "sum" do
+      expect(BITS.new("C200B40A82").compute).to eql 3
+    end
+
+    specify "product" do
+      expect(BITS.new("04005AC33890").compute).to eql 54
+    end
+
+    specify "min" do
+      expect(BITS.new("880086C3E88112").compute).to eql 7
+    end
+
+    specify "max" do
+      expect(BITS.new("CE00C43D881120").compute).to eql 9
+    end
+
+    specify "less than" do
+      expect(BITS.new("D8005AC2A8F0").compute).to eql 1
+    end
+
+    specify "greater" do
+      expect(BITS.new("F600BC2D8F").compute).to eql 0
+    end
+
+    specify "not equals" do
+      expect(BITS.new("9C005AC2F8F0").compute).to eql 0
+    end
+
+    specify "equals 2" do
+      expect(BITS.new("9C0141080250320F1802104A08").compute).to eql 1
+    end
   end
 
-  skip "part 2 - answer" do
+  specify "part 2 - answer" do
+    expect(BITS.new(input).compute).to eql 470949537659
   end
 end
